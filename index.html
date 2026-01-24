@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Zen Mart | Craft Vault Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #050505; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .neon-border { border: 1px solid rgba(0, 242, 255, 0.3); box-shadow: 0 0 20px rgba(0, 242, 255, 0.05); }
+        .gradient-text { background: linear-gradient(90deg, #00f2ff, #0062ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: 'Orbitron', sans-serif; cursor: pointer; }
+        
+        /* PC Visibility Fix: Sections will now display correctly on all screens */
+        .category-section { display: none; min-height: 80vh; padding: 40px 20px; text-align: center; position: relative; z-index: 2; }
+        .active-section { display: block !important; }
+
+        /* Responsive Grid for PC - Displays side-by-side cards */
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; justify-items: center; max-width: 1400px; margin: 0 auto; }
+
+        .product-card { 
+            background: rgba(20, 20, 25, 0.8); 
+            backdrop-filter: blur(10px);
+            border-radius: 20px; 
+            transition: 0.3s ease-in-out; 
+            width: 100%; 
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            height: 480px; 
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .product-card:hover { transform: translateY(-10px); border-color: rgba(0, 242, 255, 0.5); box-shadow: 0 10px 30px rgba(0, 242, 255, 0.2); }
+
+        .desc-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; overflow-y: auto; margin: 15px 0; padding: 5px; }
+        .desc-container::-webkit-scrollbar { width: 3px; }
+        .desc-container::-webkit-scrollbar-thumb { background: #00f2ff; border-radius: 10px; }
+
+        .desc-text { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; font-weight: 500; font-size: 0.8rem; color: #cbd5e1; }
+        .desc-separator { color: #00f2ff; opacity: 0.5; margin: 0 2px; }
+        .price-text { color: #00f2ff; font-weight: 800; font-size: 1.875rem; margin-top: auto; padding-bottom: 10px; } 
+        
+        .admin-only { display: none; }
+        .hidden { display: none !important; }
+
+        #mobileMenu { transition: 0.4s; transform: translateX(100%); }
+        #mobileMenu.open { transform: translateX(0); }
+    </style>
+</head>
+<body>
+
+    <nav class="p-5 border-b border-gray-900 flex justify-between items-center bg-black/80 backdrop-blur-md sticky top-0 z-[100]">
+        <h1 id="logo" class="text-xl md:text-2xl font-bold gradient-text">SHADOW ZEN MART</h1>
+        <div class="hidden md:flex space-x-6 text-xs uppercase tracking-[0.2em] font-bold text-gray-400">
+            <span onclick="showSection('gaming-section')" class="nav-item cursor-pointer text-cyan-400">Gaming</span>
+            <span onclick="showSection('services-section')" class="nav-item cursor-pointer hover:text-cyan-400">Services</span>
+            <span onclick="showSection('playing-section')" class="nav-item cursor-pointer hover:text-cyan-400">Playing</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="adminBtn" onclick="checkAdmin()" class="hidden bg-cyan-900/30 border border-cyan-500/50 px-3 py-1 rounded text-[10px] font-bold text-cyan-400 uppercase">Master Key</button>
+            <button onclick="toggleMenu()" class="md:hidden text-cyan-400 text-2xl">☰</button>
+        </div>
+    </nav>
+
+    <div id="mobileMenu" class="fixed top-0 right-0 h-full w-64 bg-black/95 z-[110] border-l border-gray-800 p-10 flex flex-col gap-8 shadow-2xl">
+        <button onclick="toggleMenu()" class="text-right text-2xl text-red-500">✕</button>
+        <span onclick="showSection('gaming-section'); toggleMenu()" class="text-lg font-bold uppercase tracking-widest cursor-pointer">Gaming Hub</span>
+        <span onclick="showSection('services-section'); toggleMenu()" class="text-lg font-bold uppercase tracking-widest cursor-pointer">Services</span>
+        <span onclick="showSection('playing-section'); toggleMenu()" class="text-lg font-bold uppercase tracking-widest cursor-pointer">Playing Now</span>
+    </div>
+
+    <main id="main-container">
+        <div id="adminPanel" class="hidden container mx-auto mt-10 bg-zinc-900/95 p-8 border border-red-900 rounded-2xl relative z-[120] max-h-[80vh] overflow-y-auto">
+            <h3 class="text-red-500 font-bold text-xl mb-6 text-center tracking-widest uppercase">Admin Control</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <input type="text" id="inpName" placeholder="Item Name" class="bg-black p-4 border border-gray-800 rounded-xl text-white outline-none">
+                <input type="text" id="inpPrice" placeholder="Price (e.g. 500 CV)" class="bg-black p-4 border border-gray-800 rounded-xl text-white outline-none">
+                <select id="inpCat" class="bg-black p-4 border border-gray-800 rounded-xl text-white">
+                    <option value="gaming-section">Gaming</option>
+                    <option value="services-section">Services</option>
+                    <option value="playing-section">Playing</option>
+                </select>
+            </div>
+            <textarea id="inpDesc" placeholder="Description (Point 1 | Point 2)" class="w-full bg-black p-4 border border-gray-800 rounded-xl text-white h-24 mb-4 outline-none"></textarea>
+            <button onclick="addNewItem()" class="w-full bg-cyan-600 font-bold py-4 rounded-xl text-white uppercase tracking-widest mb-4">PUBLISH ITEM</button>
+            <button onclick="logoutAdmin()" class="w-full bg-gray-800 py-2 rounded-lg text-xs text-gray-500 text-center">CLOSE PANEL</button>
+        </div>
+
+        <section id="gaming-section" class="category-section active-section">
+            <h3 class="text-2xl font-bold text-cyan-400 mb-10 tracking-[0.3em] uppercase">Gaming Items</h3>
+            <div id="gaming-container" class="items-grid">
+                
+                <div class="product-card neon-border relative">
+                    <button class="admin-only absolute top-3 right-3 bg-red-600/50 text-white w-6 h-6 rounded-full text-[10px]" onclick="this.parentElement.remove()">X</button>
+                    <h4 class="text-xl font-bold mb-2 text-white uppercase">Diamond Pickaxe ⛏️</h4>
+                    <div class="desc-container"><div class="desc-text"><span>✨ Mending: 100</span> | <span>🛡️ Unbreaking: 100</span> | <span>💎 Fortune: 30</span> | <span>⚡ Efficiency: 100</span></div></div>
+                    <p class="price-text">500 CV</p>
+                    <a href="#" class="block bg-cyan-600 py-3 rounded-xl font-bold uppercase text-center text-sm">BUY NOW</a>
+                </div>
+
+                <div class="product-card neon-border relative">
+                    <button class="admin-only absolute top-3 right-3 bg-red-600/50 text-white w-6 h-6 rounded-full text-[10px]" onclick="this.parentElement.remove()">X</button>
+                    <h4 class="text-xl font-bold mb-2 text-white uppercase">Diamond Axe 🪓</h4>
+                    <div class="desc-container"><div class="desc-text"><span>✨ Mending: 100</span> | <span>🛡️ Unbreaking: 100</span> | <span>⚡ Efficiency: 100</span> | <span>⚔️ Sharpness: 10</span></div></div>
+                    <p class="price-text">1000 CV</p>
+                    <a href="#" class="block bg-cyan-600 py-3 rounded-xl font-bold uppercase text-center text-sm">BUY NOW</a>
+                </div>
+
+                <div class="product-card neon-border relative">
+                    <button class="admin-only absolute top-3 right-3 bg-red-600/50 text-white w-6 h-6 rounded-full text-[10px]" onclick="this.parentElement.remove()">X</button>
+                    <h4 class="text-xl font-bold mb-2 text-white uppercase">Diamond Helmet 🪖</h4>
+                    <div class="desc-container"><div class="desc-text"><span>🛡️ Prot: 255</span> | <span>🔥 Fire Prot: 255</span> | <span>✨ Mending: 255</span></div></div>
+                    <p class="price-text">3000 CV</p>
+                    <a href="#" class="block bg-cyan-600 py-3 rounded-xl font-bold uppercase text-center text-sm">BUY NOW</a>
+                </div>
+
+                <div class="product-card neon-border relative">
+                    <button class="admin-only absolute top-3 right-3 bg-red-600/50 text-white w-6 h-6 rounded-full text-[10px]" onclick="this.parentElement.remove()">X</button>
+                    <h4 class="text-xl font-bold mb-2 text-white uppercase">Diamond Chestplate 👕</h4>
+                    <div class="desc-container"><div class="desc-text"><span>🛡️ Prot: 255</span> | <span>🔥 Fire Prot: 255</span> | <span>✨ Mending: 255</span></div></div>
+                    <p class="price-text">3000 CV</p>
+                    <a href="#" class="block bg-cyan-600 py-3 rounded-xl font-bold uppercase text-center text-sm">BUY NOW</a>
+                </div>
+
+                <div class="product-card neon-border relative">
+                    <button class="admin-only absolute top-3 right-3 bg-red-600/50 text-white w-6 h-6 rounded-full text-[10px]" onclick="this.parentElement.remove()">X</button>
+                    <h4 class="text-xl font-bold mb-2 text-white uppercase">Diamond Leggings 👖</h4>
+                    <div class="desc-container"><div class="desc-text"><span>🛡️ Prot: 255</span> | <span>✨ Swift Sneak: 5</span></div></div>
+                    <p class="price-text">3000 CV</p>
+                    <a href="#" class="block bg-cyan-600 py-3 rounded-xl font-bold uppercase text-center text-sm">BUY NOW</a>
+                </div>
+
+                <div class="product-card neon-border relative">
+                    <button class="admin-only absolute top-3 right-3 bg-red-600/50 text-white w-6 h-6 rounded-full text-[10px]" onclick="this.parentElement.remove()">X</button>
+                    <h4 class="text-xl font-bold mb-2 text-white uppercase">Diamond Boots 🥾</h4>
+                    <div class="desc-container"><div class="desc-text"><span>🛡️ Prot: 255</span> | <span>❄️ Frost Walker: 2</span></div></div>
+                    <p class="price-text">3000 CV</p>
+                    <a href="#" class="block bg-cyan-600 py-3 rounded-xl font-bold uppercase text-center text-sm">BUY NOW</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="services-section" class="category-section"><h3 class="text-2xl font-bold text-purple-500 mb-10 uppercase tracking-widest">Services</h3><div id="services-container" class="items-grid"></div></section>
+        <section id="playing-section" class="category-section"><h3 class="text-2xl font-bold text-green-500 mb-10 uppercase tracking-widest">Playing Now</h3><div id="playing-container" class="items-grid"></div></section>
+    </main>
+
+    <script>
+        document.addEventListener('keydown', (e) => { if(e.shiftKey && e.key === 'A') document.getElementById('adminBtn').classList.toggle('hidden'); });
+        let taps = 0;
+        document.getElementById('logo').addEventListener('click', () => { taps++; if(taps === 3) { document.getElementById('adminBtn').classList.toggle('hidden'); taps = 0; } setTimeout(() => taps = 0, 2000); });
+        function toggleMenu() { document.getElementById('mobileMenu').classList.toggle('open'); }
+        function showSection(id) {
+            document.querySelectorAll('.category-section').forEach(s => s.classList.remove('active-section'));
+            document.getElementById(id).classList.add('active-section');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('text-cyan-400'));
+        }
+        function checkAdmin() {
+            let pass = prompt("Master Key Required:");
+            if (pass === "D!a$4!U7@o5$@0") { 
+                document.getElementById('adminPanel').classList.remove('hidden'); 
+                document.querySelectorAll('.admin-only').forEach(btn => btn.style.display = 'block');
+            } else alert("ACCESS DENIED!");
+        }
+        function logoutAdmin() { document.getElementById('adminPanel').classList.add('hidden'); document.querySelectorAll('.admin-only').forEach(btn => btn.style.display = 'none'); }
+        function addNewItem() {
+            const name = document.getElementById('inpName').value;
+            const price = document.getElementById('inpPrice').value;
+            const desc = document.getElementById('inpDesc').value;
+            const catId = document.getElementById('inpCat').value;
+            const container = document.getElementById(catId.split('-')[0] + '-container');
+            if(!name || !price || !desc) return alert("Hacky, shob fill up kor!");
+            const styledDesc = desc.split('|').map(i => `<span>${i.trim()}</span>`).join(' <span class="desc-separator">|</span> ');
+            const card = document.createElement('div');
+            card.className = "product-card neon-border relative";
+            card.innerHTML = `
+                <button class="admin-only absolute top-3 right-3 bg-red-600/50 text-white w-6 h-6 rounded-full text-[10px]" style="display:block" onclick="this.parentElement.remove()">X</button>
+                <h4 class="text-xl font-bold mb-2 text-white uppercase">${name}</h4>
+                <div class="desc-container"><div class="desc-text">${styledDesc}</div></div>
+                <p class="price-text">${price.toUpperCase()}</p>
+                <a href="#" class="block bg-cyan-600 py-3 rounded-xl font-bold uppercase text-center text-sm">BUY NOW</a>`;
+            container.appendChild(card);
+            document.getElementById('inpName').value = ""; document.getElementById('inpPrice').value = ""; document.getElementById('inpDesc').value = "";
+        }
+    </script>
+</body>
+</html>
